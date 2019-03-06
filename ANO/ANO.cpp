@@ -70,7 +70,7 @@ double ComputePerimeterForObject(FeatureList &obj, Mat indexedImage, Mat colored
 
 
 			if (indexedImage.at<float>(y, x) == index) {
-				perimeter += pow((x - center.x), p) * pow((y - center.y), q) * index;
+				perimeter += pow((x - center.x), p) * pow((y - center.y), q) * indexedImage.at<float>(y,x);
 			}
 		}
 	}
@@ -116,8 +116,8 @@ void ComputeFeatureTwo(ObjectFeature &feature)
 		double micro20 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 2, 0);
 		double micro02 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 0, 2);
 		double micro11 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 1, 1);
-		double microMax = (1 / 2) * (micro20 + micro02) + (1 / 2) * sqrt((4 * pow(micro11, 2)) + pow(micro20 - micro02, 2));
-		double microMin = (1 / 2) * (micro20 + micro02) - (1 / 2) * sqrt((4 * pow(micro11, 2)) + pow(micro20 - micro02, 2));
+		double microMax = (1.0 / 2.0) * (micro20 + micro02) + (1.0 / 2.0) * sqrt((4 * pow(micro11, 2)) + pow(micro20 - micro02, 2));
+		double microMin = (1.0 / 2.0) * (micro20 + micro02) - (1.0 / 2.0) * sqrt((4 * pow(micro11, 2)) + pow(micro20 - micro02, 2));
 
 		(*obj).Feature2 = microMin / microMax;
 		obj++;
@@ -134,12 +134,16 @@ void PutTextInimage(ObjectFeature &feature)
 	while (obj != feature.Objects.end())
 	{
 		Point center = (*obj).Center;
-		string feature1 = "F1: " + to_string((*obj).Feature1);
-		string feature2 = "F2: " + to_string((*obj).Feature2);
+		stringstream stream;
+		stream << fixed << setprecision(2) << (*obj).Feature1;
+		string feature1 = "F1:" + stream.str();
+		stream.str("");
+		stream << fixed << setprecision(2) << (*obj).Feature2;
+		string feature2 = "F2:" + stream.str();
 
 		cv::putText(feature.ColoredImage,
 			feature1,
-			Point(center.x-10, center.y - 10), // Coordinates
+			Point(center.x-10, center.y - 5), // Coordinates
 			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
 			0.5, // Scale. 2.0 = 2x bigger
 			cv::Scalar(255, 255, 255)); // BGR Color
@@ -147,7 +151,7 @@ void PutTextInimage(ObjectFeature &feature)
 
 		cv::putText(feature.ColoredImage,
 			feature2,
-			Point(center.x-10, center.y + 10), // Coordinates
+			Point(center.x-10, center.y + 5), // Coordinates
 			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
 			0.5, // Scale. 2.0 = 2x bigger
 			cv::Scalar(255, 255, 255)); // BGR Color
@@ -165,7 +169,7 @@ void ImageTresholding()
 	Mat coloredImage = Mat::zeros(imageGray.size(), CV_8UC3);
 
 	std::list<FeatureList> objects;
-	int index = rand() % 255 + 1;
+	int index = 1;
 	Vec3b color = Vec3b(rand() % 255, rand() % 255, rand() % 255);
 
 	for (int y = 0; y < imageGray.rows; y++) {
@@ -175,7 +179,7 @@ void ImageTresholding()
 				FeatureList obj = FeatureList(index, color);
 				Recursion(imageGray, indexedImage, coloredImage, y, x,obj);
 				objects.push_back(obj);
-				index = rand() % 255 + 1;
+				index += 1;
 				color = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
 			}
 		}
