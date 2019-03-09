@@ -29,15 +29,15 @@ public:
 
 	void AddClass() {
 		
-		if (this->x >= 0.13 && this->x <= 0.16 && this->y >= 0.94 && this->y <= 0.98)
+		if (this->x >= 0.11 && this->x <= 0.18 && this->y >= 0.85 && this->y <= 0.99)
 		{
 			this->label = "Square";
 		}
-		else if (this->x >= 0.161  && this->x <= 0.21 && this->y >= 0.07 && this->y <= 0.11)
+		else if (this->x >= 0.14  && this->x <= 0.21 && this->y >= 0.02 && this->y <= 0.25)
 		{
 			this->label = "Rectangle";
 		}
-		else if (this->x >= 0.62 && this->x <= 0.66 && this->y >= 0.89  && this->y <= 0.93)
+		else if (this->x >= 0.58 && this->x <= 0.70 && this->y >= 0.7  && this->y <= 0.99)
 		{
 			this->label = "Star";
 		}

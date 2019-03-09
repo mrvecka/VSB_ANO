@@ -8,17 +8,19 @@
 using namespace cv;
 using namespace std;
 
-void Recursion(Mat &image, Mat &indexedImage, Mat &coloredImage, int y, int x, FeatureList obj) {
+void Recursion(Mat &image, Mat &indexedImage, Mat &coloredImage, int y, int x, FeatureList obj) 
+{
 	if (x > image.cols || x < 0)
 		return;
 	if (y > image.rows || y < 0)
 		return;
 
+
 	if (image.at<float>(y, x) != 0 && indexedImage.at<float>(y, x) == 0)
 	{
 		indexedImage.at<float>(y, x) = obj.Index;
 		coloredImage.at<Vec3b>(y, x) = obj.Color;
-		Recursion(image, indexedImage, coloredImage, y, x + 1,obj);
+		Recursion(image, indexedImage, coloredImage, y, x + 1, obj);
 		Recursion(image, indexedImage, coloredImage, y + 1, x, obj);
 		Recursion(image, indexedImage, coloredImage, y, x - 1, obj);
 		Recursion(image, indexedImage, coloredImage, y - 1, x, obj);
@@ -267,7 +269,9 @@ void IlustrateFeatures(ObjectFeature &feature)
 
 void ImageTresholding()
 {
-	Mat image = imread("images/train.png", CV_LOAD_IMAGE_GRAYSCALE);
+//	Mat image = imread("images/train.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat image = imread("images/test02.png", CV_LOAD_IMAGE_GRAYSCALE);
+
 	Mat imageGray;
 	image.convertTo(imageGray, CV_32FC1, 1.0 / 255.0);
 	Mat indexedImage = Mat::zeros(imageGray.size(), CV_32FC1);
