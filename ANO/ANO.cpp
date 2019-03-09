@@ -27,10 +27,10 @@ void Recursion(Mat &image, Mat &indexedImage, Mat &coloredImage, int y, int x, F
 
 void ComputeCenterOfObjects(ObjectFeature &feature) {
 
-		int index = 0;
 		std::list<FeatureList>::iterator obj = feature.Objects.begin();
 		std::list<FeatureList> reducedObjects;
-		std::cout << "Computing centers" << std::endl;
+		std::cout << "Computing centers and perimeters" << std::endl;
+		int perimeter = 0;
 		while (obj != feature.Objects.end())
 		{
 			float m10 = 0.0;
@@ -39,10 +39,14 @@ void ComputeCenterOfObjects(ObjectFeature &feature) {
 			for (int y = 0; y < feature.IndexedImage.rows; y++) {
 				for (int x = 0; x < feature.IndexedImage.cols; x++) {
 					if (feature.IndexedImage.at<float>(y, x) == (*obj).Index) {
-						m10 += pow(x, 1) * pow(y, 0) * feature.IndexedImage.at<float>(y, x);
-						m01 += pow(x, 0) * pow(y, 1) * feature.IndexedImage.at<float>(y, x);
-						m00 += pow(x, 0) * pow(y, 0) * feature.IndexedImage.at<float>(y, x);
-					}
+						m10 += pow(x, 1) * pow(y, 0);
+						m01 += pow(x, 0) * pow(y, 1);
+						m00 += pow(x, 0) * pow(y, 0);
+						if (feature.IndexedImage.at<float>(y - 1, x) != (*obj).Index || feature.IndexedImage.at<float>(y + 1, x) != (*obj).Index || feature.IndexedImage.at<float>(y, x - 1) != (*obj).Index || feature.IndexedImage.at<float>(y, x + 1) != (*obj).Index)
+						{
+							perimeter++;
+						}
+					} 
 				}
 			}
 			if (m00 > 100)
@@ -50,9 +54,10 @@ void ComputeCenterOfObjects(ObjectFeature &feature) {
 				Point p = Point(m10 / m00, m01 / m00);
 				(*obj).Center =  p;
 				(*obj).Area = m00;
+				(*obj).Perimeter = perimeter;
 				reducedObjects.push_back(*obj);
 			}
-
+			perimeter = 0;
 			obj++;
 		}
 		feature.Objects = reducedObjects;	
@@ -60,9 +65,9 @@ void ComputeCenterOfObjects(ObjectFeature &feature) {
 
 }
 
-double ComputePerimeterForObject(FeatureList &obj, Mat indexedImage, Mat coloredImage, int p, int q)
+int ComputeMicroForObject(FeatureList &obj, Mat indexedImage, Mat coloredImage, int p, int q)
 {
-	double perimeter = 0.0;
+	double micro = 0.0;
 	int index = obj.Index;
 	Point center = obj.Center;
 	for (int y = 0; y < indexedImage.rows; y++) {
@@ -70,27 +75,28 @@ double ComputePerimeterForObject(FeatureList &obj, Mat indexedImage, Mat colored
 
 
 			if (indexedImage.at<float>(y, x) == index) {
-				perimeter += pow((x - center.x), p) * pow((y - center.y), q) * indexedImage.at<float>(y,x);
+				micro += pow((x - center.x), p) * pow((y - center.y), q);
+
 			}
 		}
 	}
-	return perimeter;
+	return micro;
 }
 
-void ComputePerimeter(ObjectFeature &feature)
-{
-	std::cout << "Computing perimeters" << std::endl;
-
-	std::list<FeatureList>::iterator obj = feature.Objects.begin();
-	while (obj != feature.Objects.end())
-	{
-		(*obj).Perimeter = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 0, 0);
-		obj++;
-	}
-
-	std::cout << "Done ..." << std::endl;
-
-}
+//void ComputePerimeter(ObjectFeature &feature)
+//{
+//	std::cout << "Computing perimeters" << std::endl;
+//
+//	std::list<FeatureList>::iterator obj = feature.Objects.begin();
+//	while (obj != feature.Objects.end())
+//	{
+//		(*obj).Feature1 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 0, 0);
+//		obj++;
+//	}
+//
+//	std::cout << "Done ..." << std::endl;
+//
+//}
 
 void ComputeFeatureOne(ObjectFeature &feature)
 {
@@ -113,9 +119,9 @@ void ComputeFeatureTwo(ObjectFeature &feature)
 	std::list<FeatureList>::iterator obj = feature.Objects.begin();
 	while (obj != feature.Objects.end())
 	{
-		double micro20 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 2, 0);
-		double micro02 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 0, 2);
-		double micro11 = ComputePerimeterForObject((*obj), feature.IndexedImage, feature.ColoredImage, 1, 1);
+		double micro20 = ComputeMicroForObject((*obj), feature.IndexedImage, feature.ColoredImage, 2, 0);
+		double micro02 = ComputeMicroForObject((*obj), feature.IndexedImage, feature.ColoredImage, 0, 2);
+		double micro11 = ComputeMicroForObject((*obj), feature.IndexedImage, feature.ColoredImage, 1, 1);
 		double microMax = (1.0 / 2.0) * (micro20 + micro02) + (1.0 / 2.0) * sqrt((4 * pow(micro11, 2)) + pow(micro20 - micro02, 2));
 		double microMin = (1.0 / 2.0) * (micro20 + micro02) - (1.0 / 2.0) * sqrt((4 * pow(micro11, 2)) + pow(micro20 - micro02, 2));
 
@@ -124,6 +130,89 @@ void ComputeFeatureTwo(ObjectFeature &feature)
 	}
 	std::cout << "Done ..." << std::endl;
 
+}
+
+double ComputeEuclideanDistance(MyPoint a, Ethalon b)
+{
+	double distance = sqrt( pow(b.x-a.x,2) + pow(b.y - a.y,2) );
+	return distance;
+}
+
+void ComputeEthalons(ObjectFeature &feature)
+{
+	std::cout << "Computing  ethalons" << std::endl;
+
+	double x = 0.0;
+	double y = 0.0;
+	std::list<Ethalon> ethalons;
+	Ethalon currentEthalon = Ethalon(0.0,0.0);
+	std::list<FeatureList>::iterator obj = feature.Objects.begin();
+	while (obj != feature.Objects.end())
+	{
+		//feature1 => x
+		//feature2 => y
+
+		if (currentEthalon.x == 0.0)
+		{
+			currentEthalon = Ethalon((*obj).Feature1, (*obj).Feature2);
+			ethalons.push_back(currentEthalon);
+		}
+		else
+		{
+			MyPoint currentPoint = MyPoint((*obj).Feature1, (*obj).Feature2);
+			std::list<Ethalon>::iterator eth = ethalons.begin();
+			bool found = false;
+			while (eth != ethalons.end())
+			{
+				if (ComputeEuclideanDistance(currentPoint, (*eth)) < 0.2)
+				{
+					(*eth) = Ethalon((currentPoint.x + (*eth).x) / 2, (currentPoint.y + (*eth).y) / 2);
+					found = true;
+				}
+
+				eth++;
+			}
+			if (!found)
+			{
+				ethalons.push_back(Ethalon(currentPoint.x,currentPoint.y));
+			}
+		}
+		obj++;
+	}
+	std::list<Ethalon>::iterator eth = ethalons.begin();
+	while (eth != ethalons.end())
+	{
+		(*eth).AddClass();
+		eth++;
+	}
+
+	feature.Ethalons = ethalons;
+	std::cout << "Done ..." << std::endl;
+
+}
+
+void AssignClassToObject(ObjectFeature &feature)
+{
+	std::list<FeatureList>::iterator obj = feature.Objects.begin();
+	while (obj != feature.Objects.end())
+	{
+		MyPoint objectPoint = MyPoint((*obj).Feature1, (*obj).Feature2);
+		double mindst = INFINITY;
+		Ethalon closestEthalon;
+		std::list<Ethalon>::iterator eth = feature.Ethalons.begin();
+		while (eth != feature.Ethalons.end())
+		{
+			double dst = ComputeEuclideanDistance(objectPoint, (*eth));
+			if (dst < mindst)
+			{
+				mindst = dst;
+				closestEthalon = (*eth);
+			}
+			eth++;
+		}
+		(*obj).ClassLabel = closestEthalon;
+		obj++;
+	}
 }
 
 void PutTextInimage(ObjectFeature &feature)
@@ -135,29 +224,45 @@ void PutTextInimage(ObjectFeature &feature)
 	{
 		Point center = (*obj).Center;
 		stringstream stream;
-		stream << fixed << setprecision(2) << (*obj).Feature1;
+		stream << fixed << setprecision(2) << (*obj).Perimeter;
 		string feature1 = "F1:" + stream.str();
 		stream.str("");
-		stream << fixed << setprecision(2) << (*obj).Feature2;
+		stream << fixed << setprecision(2) << (*obj).Area;
 		string feature2 = "F2:" + stream.str();
 
+		string text = (*obj).ClassLabel.label;
+
 		cv::putText(feature.ColoredImage,
-			feature1,
-			Point(center.x-10, center.y - 5), // Coordinates
+			text,
+			Point(center.x, center.y), // Coordinates
 			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
 			0.5, // Scale. 2.0 = 2x bigger
 			cv::Scalar(255, 255, 255)); // BGR Color
 		//std::cout << centerPoint<< std::endl;
 
-		cv::putText(feature.ColoredImage,
-			feature2,
-			Point(center.x-10, center.y + 5), // Coordinates
-			cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
-			0.5, // Scale. 2.0 = 2x bigger
-			cv::Scalar(255, 255, 255)); // BGR Color
-		//std::cout << centerPoint<< std::endl;
+		//cv::putText(feature.ColoredImage,
+		//	feature2,
+		//	Point(center.x-10, center.y + 5), // Coordinates
+		//	cv::FONT_HERSHEY_COMPLEX_SMALL, // Font
+		//	0.5, // Scale. 2.0 = 2x bigger
+		//	cv::Scalar(255, 255, 255)); // BGR Color
+		////std::cout << centerPoint<< std::endl;
 		obj++;
 	}
+}
+
+void IlustrateFeatures(ObjectFeature &feature)
+{
+	Mat coloredImage = Mat::zeros(cv::Size(600,200), CV_8UC3);
+	std::list<FeatureList>::iterator obj = feature.Objects.begin();
+	while (obj != feature.Objects.end())
+	{
+		circle(coloredImage, cv::Point((*obj).Feature1*500, (*obj).Feature2*50), 3, (255, 255, 255), 1);
+		obj++;
+	}
+	imshow("Features ilustration", coloredImage);
+
+
 }
 
 void ImageTresholding()
@@ -191,13 +296,15 @@ void ImageTresholding()
 	feature.Objects = objects;
 
 	ComputeCenterOfObjects(feature);
-	ComputePerimeter(feature);
+	//ComputePerimeter(feature);
 	ComputeFeatureOne(feature);
 	ComputeFeatureTwo(feature);
+	ComputeEthalons(feature);
+	AssignClassToObject(feature);
 
-
-
+	IlustrateFeatures(feature);
 	PutTextInimage(feature);
+
 	imshow("Initial", imageGray);
 	imshow("tresshold", feature.IndexedImage);
 	imshow("color", feature.ColoredImage);
