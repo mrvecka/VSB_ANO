@@ -140,6 +140,12 @@ double ComputeEuclideanDistance(MyPoint a, Ethalon b)
 	return distance;
 }
 
+double ComputeEuclideanDistance(MyPoint a, MyPoint b)
+{
+	double distance = sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
+	return distance;
+}
+
 void ComputeEthalons(ObjectFeature &feature)
 {
 	std::cout << "Computing  ethalons" << std::endl;
@@ -195,6 +201,8 @@ void ComputeEthalons(ObjectFeature &feature)
 
 void AssignClassToObject(ObjectFeature &feature)
 {
+	std::cout << "Getting class for objects" << std::endl;
+
 	std::list<FeatureList>::iterator obj = feature.Objects.begin();
 	while (obj != feature.Objects.end())
 	{
@@ -215,6 +223,107 @@ void AssignClassToObject(ObjectFeature &feature)
 		(*obj).ClassLabel = closestEthalon;
 		obj++;
 	}
+	std::cout << "Done ..." << std::endl;
+
+}
+
+void ComputeKMeans(ObjectFeature &feature)
+{
+	std::cout << "Computing k-means" << std::endl;
+
+	int numOfCentroids = feature.Ethalons.size();
+	srand(time(NULL));
+	std::list<CentroidObject> centroids;
+
+	for (int i = 0; i < numOfCentroids; i++)
+	{
+		int index = rand() % (feature.Objects.size() - 1) + 1;
+		std::list<FeatureList>::iterator it = feature.Objects.begin();
+		std::advance(it, index);
+		CentroidObject c;
+		c.Centroid = MyPoint((*it).Feature1, (*it).Feature2);
+		centroids.push_back(c);
+	}
+	double delta = 0.05;
+	bool iterate = true;
+
+	while (iterate)
+	{
+		//clear closestobject list from previous iteration
+		std::list<CentroidObject>::iterator cen = centroids.begin();
+		while (cen != centroids.end())
+		{
+			(*cen).ClosestObjects.clear();
+			cen++;
+		}
+
+		//asign objects to centroids
+		std::list<FeatureList>::iterator obj = feature.Objects.begin();
+		while (obj != feature.Objects.end())
+		{
+			double distance = INFINITY;
+			CentroidObject *closestCentroid = nullptr;
+			MyPoint objectPoint = MyPoint((*obj).Feature1, (*obj).Feature2);
+			std::list<CentroidObject>::iterator cen = centroids.begin();
+			while (cen != centroids.end())
+			{
+				double temp = ComputeEuclideanDistance((*cen).Centroid, objectPoint);
+				if (temp < distance)
+				{
+					distance = temp;
+					closestCentroid = &(*cen);
+				}
+
+				cen++;
+			}
+			closestCentroid->ClosestObjects.push_back((*obj));
+			obj++;
+		}
+
+		int tmp = 0;
+		//compute centroids
+		cen = centroids.begin();
+		while (cen != centroids.end())
+		{
+			if ((*cen).ClosestObjects.size() > 0)
+			{
+				MyPoint oldCentroid = (*cen).Centroid;
+				double sumX = 0.0;
+				double sumY = 0.0;
+				int count = 0;
+				std::list<FeatureList>::iterator obj = (*cen).ClosestObjects.begin();
+				while (obj != (*cen).ClosestObjects.end())
+				{
+					sumX += (*obj).Feature1;
+					sumY += (*obj).Feature2;
+					count++;
+					obj++;
+				}
+
+				MyPoint newCentroid = MyPoint(sumX / count, sumY / count);
+				double dist = ComputeEuclideanDistance(oldCentroid, newCentroid);
+				if (dist <= delta)
+				{
+					if (tmp == 0)
+						iterate = false;
+				}
+				else
+				{
+					iterate = true;
+				}
+
+				(*cen).Centroid = newCentroid;
+
+				tmp++;
+			}
+			
+			cen++;
+		}
+	}
+	
+	feature.Centroids = centroids;
+	std::cout << "Done ..." << std::endl;
+
 }
 
 void PutTextInimage(ObjectFeature &feature)
@@ -259,9 +368,17 @@ void IlustrateFeatures(ObjectFeature &feature)
 	std::list<FeatureList>::iterator obj = feature.Objects.begin();
 	while (obj != feature.Objects.end())
 	{
-		circle(coloredImage, cv::Point((*obj).Feature1*500, (*obj).Feature2*50), 3, (255, 255, 255), 1);
+		circle(coloredImage, cv::Point((*obj).Feature1*500, (*obj).Feature2*50), 3, cv::Scalar(0.0,0.0,255.0,1.0), 1);
 		obj++;
 	}
+
+	std::list<CentroidObject>::iterator cen = feature.Centroids.begin();
+	while (cen != feature.Centroids.end())
+	{
+		circle(coloredImage, cv::Point((*cen).Centroid.x * 500, (*cen).Centroid.y * 50), 6, cv::Scalar(255.0, 0.0, 0.0, 1.0), 1);
+		cen++;
+	}
+
 	imshow("Features ilustration", coloredImage);
 
 
@@ -269,8 +386,8 @@ void IlustrateFeatures(ObjectFeature &feature)
 
 void ImageTresholding()
 {
-//	Mat image = imread("images/train.png", CV_LOAD_IMAGE_GRAYSCALE);
-	Mat image = imread("images/test02.png", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat image = imread("images/train.png", CV_LOAD_IMAGE_GRAYSCALE);
+	//Mat image = imread("images/test02.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 	Mat imageGray;
 	image.convertTo(imageGray, CV_32FC1, 1.0 / 255.0);
@@ -305,6 +422,7 @@ void ImageTresholding()
 	ComputeFeatureTwo(feature);
 	ComputeEthalons(feature);
 	AssignClassToObject(feature);
+	ComputeKMeans(feature);
 
 	IlustrateFeatures(feature);
 	PutTextInimage(feature);

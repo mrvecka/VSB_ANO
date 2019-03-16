@@ -3,16 +3,19 @@
 
 using namespace cv;
 
+
 class MyPoint {
 public:
 	double x;
 	double y;
+	MyPoint() {}
 	MyPoint(double x, double y)
 	{
 		this->x = x;
 		this->y = y;
 	}
 };
+
 
 class Ethalon {
 public:
@@ -68,12 +71,28 @@ public:
 	static double GetPerimeter(FeatureList obj) { return obj.Perimeter; }
 };
 
+
+class CentroidObject {
+public:
+	MyPoint Centroid;
+	std::list<FeatureList> ClosestObjects;
+	//CentroidObject(MyPoint point)
+	//{
+	//	this->Centroid = point;
+	//}
+	//CentroidObject() {
+	//	this->Centroid = MyPoint(0.0, 0.0);
+	//}
+	CentroidObject() {}
+};
+
 class ObjectFeature {
 public:
 	Mat IndexedImage;
 	Mat ColoredImage;
 	std::list<FeatureList> Objects;
 	std::list<Ethalon> Ethalons;
-
+	std::list<CentroidObject> Centroids;
 
 };
+
