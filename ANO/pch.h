@@ -18,9 +18,19 @@
 
 #include <stdlib.h>
 #include <string>
-#include <iostream>
 #include "pch.h"
 #include <iostream>
 
+#include <time.h>
+#include <math.h>
+#include <string.h>
+#include <vector>
+#include "backprop.h"
+
+
+#define LAMBDA 1.0
+#define ETA 0.1
+
+#define SQR( x ) ( ( x ) * ( x ) )
 
 #endif //PCH_H
