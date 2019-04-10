@@ -81,41 +81,35 @@ void releaseNN( NN *& nn )
 
 void feedforward(NN * nn)
 {
-	for (int layer = 0; layer < nn->l; layer++)
+	for (int k = 0; k < nn->l; k++)
 	{
-		if (layer == 0)
+		if (k == 0)
 		{
-			int numOfNeurons = nn->n[layer];
-			for (int n = 0; n < numOfNeurons; n++)
+			for (int i = 0; i < nn->n[k]; i++)
 			{
-				nn->y[layer][n] = 1.0 / (1.0 + exp(-LAMBDA * nn->in[n]));
+				double tmp = 1.0 / (1.0 + exp(-LAMBDA * nn->in[i]));
+				nn->y[k][i] = nn->in[i];
 			}
 		}
 		else
 		{
-			int numOfNeurons = nn->n[layer];
-			for (int n = 0; n < numOfNeurons; n++)
+			for (int i = 0; i < nn->n[k]; i++)
 			{
 				double weight = 0.0;
-				for (int we = 0; we < nn->n[layer - 1]; we++)
+				for (int j = 0; j < nn->n[k - 1]; j++)
 				{
-					weight += nn->w[layer - 1][n][we] *  nn->y[layer-1][we];
+					weight += nn->w[k - 1][i][j] *  nn->y[k-1][j];
 				}
-
-				weight = 1.0 / (1.0 + exp(-LAMBDA * weight));
-				nn->y[layer][n] = weight;
+				double tmp = 1 / (1 + exp(-LAMBDA * weight));
+				nn->y[k][i] = tmp;
 			}
 		}
 	}
-
 
 	for (int o = 0; o < nn->n[nn->l-1]; o++)
 	{
 		nn->out[o] =  nn->y[nn->l - 1][o];
 	}
-
-
-
 }
 
 double backpropagation( NN * nn, double * t ) 
@@ -124,27 +118,24 @@ double backpropagation( NN * nn, double * t )
 	{
 		if (k == nn->l-1)//output layer
 		{
-			for (int n = 0; n < nn->n[k]; n++)//neurons
+			for (int i = 0; i < nn->n[k]; i++)//neurons
 			{
-				double to = t[n];
-				double y = nn->y[k][n];
-				double res = (to - nn->y[k][n]) * LAMBDA *   nn->y[k][n] * (1 - nn->y[k][n]);
-				nn->d[k][n] -= res;
+				double to = t[i];
+				double y = nn->y[k][i];
+				nn->d[k][i] = (to - nn->y[k][i]) * LAMBDA *   nn->y[k][i] * (1 - nn->y[k][i]);
 			}
 		}
-		else
+		else if ( k != 0) //hidden layer
 		{
-			for (int n = 0; n < nn->n[k]; n++)//neurons
+			for (int i = 0; i < nn->n[k]; i++)//neurons
 			{
 				double errorResult = 0.0;
-				int indexOfUpperlayer = k + 1;
-				for (int j = 0; j < nn->n[indexOfUpperlayer]; j++)//neurons from upper layer
+				for (int j = 0; j < nn->n[k+1]; j++)//neurons from upper layer
 				{
-					errorResult += nn->d[indexOfUpperlayer][j] * nn->w[k][j][n];
+					errorResult += nn->d[k + 1][j] * nn->w[k][j][i];
 				}
 
-				errorResult = errorResult * LAMBDA *   nn->y[k][n] * (1 - nn->y[k][n]);
-				nn->d[k][n] -= errorResult;
+				nn->d[k][i] = errorResult * LAMBDA *   nn->y[k][i] * (1 - nn->y[k][i]);
 			}
 		}
 	}
@@ -159,7 +150,7 @@ double backpropagation( NN * nn, double * t )
 				double d = nn->d[k + 1][i];
 				double y = nn->y[k][i];
 				double newWeight = ETA * d * y;
-				nn->w[k][i][j] += newWeight;
+				nn->w[k][i][j] = newWeight;
 			}
 
 		}

@@ -471,121 +471,186 @@ void Test() {
 
 void Test2() {
 	cv::Mat P_3x4 = cv::Mat::zeros(3, 4, CV_64FC1); // projection matrix
-	cv::Mat x_4x1 = cv::Mat::zeros(4, 1, CV_64FC1); // pojnt x in homogeneous coordinates
+	cv::Mat rbl = cv::Mat::zeros(4, 1, CV_64FC1); // pojnt x in homogeneous coordinates
+	cv::Mat fbl = cv::Mat::zeros(4, 1, CV_64FC1); // pojnt x in homogeneous coordinates
+	cv::Mat fbr = cv::Mat::zeros(4, 1, CV_64FC1); // pojnt x in homogeneous coordinates
+	cv::Mat ftl = cv::Mat::zeros(4, 1, CV_64FC1); // pojnt x in homogeneous coordinates
 
 	P_3x4 = (cv::Mat_<double>(3, 4) << 721.5377, 0, 609.5593, 44.85728, 0, 721.5377, 172.854, 0.2163791, 0, 0, 1, 0.002745884);
-	x_4x1 = (cv::Mat_<double>(4, 1) << 700, 223, 50, 1); //TODo:
+	rbl = (cv::Mat_<double>(4, 1) << -2.18, 0, 0.79, 1); //rbl -> label 00002
+	fbl = (cv::Mat_<double>(4, 1) << 2.18, 0, 0.79, 1); //fbl -> label 00002
+	fbr = (cv::Mat_<double>(4, 1) << 2.18, 0, -0.79, 1); //fbr -> label 00002
+	ftl = (cv::Mat_<double>(4, 1) << 2.18, -1.41, 0.79, 1); //ftl -> label 00002
 
-	cv::Mat y_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); // point x in image plane
-	y_3x1 = P_3x4 * x_4x1;
-	y_3x1 = y_3x1 / y_3x1.at<double>(2, 0);
+	cv::Mat RotationY_3x3 = (cv::Mat_<double>(3, 3) << cos(-1.58), 0.0, sin(-1.58), 0.0,1.0,0.0,-sin(-1.58),0.0,cos(-1.58)); // rotation matrix
+	cv::Mat Translation_3x1 = (cv::Mat_<double>(3, 1) << 3.18, 2.27, 34.38); //translation vector cx,cy,cz
+	cv::Mat RotationY_4x4 = (cv::Mat_<double>(4, 4) << cos(-1.58), 0.0, sin(-1.58),3.18, 0.0, 1.0, 0.0,2.27, -sin(-1.58), 0.0, cos(-1.58),34.38,0,0,0,1); // rotation matrix
 
-	cout << "y_3x1 = " << endl << " " << y_3x1 << endl << endl;
-	cv::Mat P_3x3 = cv::Mat::zeros(3, 3, CV_64FC1); //P3
-	cv::Mat P_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); // fourth col of projection matrix
-	P_3x3 = (cv::Mat_<double>(3, 3) << 721.5377, 0, 609.5593, 44.85728, 0, 721.5377, 172.854, 0.2163791, 0);
+	cout << "Rotation_Y = " << endl << " " << RotationY_4x4 << endl << endl;
+
+	cout << "X = " << endl << " " << rbl << endl << endl;
+
+	rbl = RotationY_4x4 * rbl;
+	cout << "Rotation_Y * rbl = " << endl << " " << rbl << endl << endl;
+	fbl = RotationY_4x4 * fbl;
+	cout << "Rotation_Y * fbl = " << endl << " " << fbl << endl << endl;
+	fbr = RotationY_4x4 * fbr;
+	cout << "Rotation_Y * fbr = " << endl << " " << fbr << endl << endl;
+	ftl = RotationY_4x4 * ftl;
+	cout << "Rotation_Y * ftl = " << endl << " " << ftl << endl << endl;
+
+	cv::Mat rbl_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); // point rbl in image plane
+	rbl_3x1 = P_3x4 * rbl;
+
+	cv::Mat fbl_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); // point fbl in image plane
+	fbl_3x1 = P_3x4 * fbl;
+
+	cv::Mat fbr_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); // point fbr in image plane
+	fbr_3x1 = P_3x4 * fbr;
+
+	cv::Mat ftl_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); // point ftl in image plane
+	ftl_3x1 = P_3x4 * ftl;
+
+	cout << "P_3x4 * X = " << endl << " " << rbl_3x1 << endl << endl;
+
+	rbl_3x1 = rbl_3x1 / rbl_3x1.at<double>(2, 0);
+	cout << "rbl_3x1 after divide by (2,0)= " << endl << " " << rbl_3x1 << endl << endl;
+
+	fbl_3x1 = fbl_3x1 / fbl_3x1.at<double>(2, 0);
+	cout << "fbl_3x1 after divide by (2,0)= " << endl << " " << fbl_3x1 << endl << endl;
+
+	fbr_3x1 = fbr_3x1 / fbr_3x1.at<double>(2, 0);
+	cout << "fbr_3x1 after divide by (2,0)= " << endl << " " << fbr_3x1 << endl << endl;
+
+	ftl_3x1 = ftl_3x1 / ftl_3x1.at<double>(2, 0);
+	cout << "ftl_3x1 after divide by (2,0)= " << endl << " " << ftl_3x1 << endl << endl;
+
+
+	Mat image = imread("C:\\Users\\Lukas\\Desktop\\semestralny projekt\\000002.png", CV_LOAD_IMAGE_COLOR);
+	Point center_rbl_3x1 = Point(rbl_3x1.at<double>(0,0), rbl_3x1.at<double>(1, 0));
+	circle(image, center_rbl_3x1, 1, CV_RGB(255, 0, 0), 3);
+
+	Point center_fbl_3x1 = Point(fbl_3x1.at<double>(0, 0), fbl_3x1.at<double>(1, 0));
+	circle(image, center_fbl_3x1, 1, CV_RGB(255, 0, 0), 3);
+
+	Point center_fbr_3x1 = Point(fbr_3x1.at<double>(0, 0), fbr_3x1.at<double>(1, 0));
+	circle(image, center_fbr_3x1, 1, CV_RGB(255, 0, 0), 3);
+
+	Point center_ftl_3x1 = Point(ftl_3x1.at<double>(0, 0), ftl_3x1.at<double>(1, 0));
+	circle(image, center_ftl_3x1, 1, CV_RGB(255, 0, 0), 3);
+
+	line(image, center_rbl_3x1, center_fbl_3x1, CV_RGB(0, 255, 0));
+	line(image, center_fbl_3x1, center_fbr_3x1, CV_RGB(0, 255, 0));
+	line(image, center_fbl_3x1, center_ftl_3x1, CV_RGB(0, 255, 0));
+
+
+
+	cv::Mat P_3x3 = (cv::Mat_<double>(3, 3) << 721.5377, 0, 609.5593, 44.85728, 0, 721.5377, 172.854, 0.2163791, 0); //P3
+	cv::Mat P_3x1 = (cv::Mat_<double>(3, 1) << 0, 1, 0.002745884); // fourth col of projection matrix
+
 	cv::Mat P_3x3_inv = P_3x3.inv();
-	P_3x1 = (cv::Mat_<double>(3, 1) << 0, 1, 0.002745884);
 
-	cv::Mat C_3x1 = cv::Mat::zeros(3, 1, CV_64FC1); //eye
-	C_3x1 = -P_3x3.inv() * P_3x1;
+	cv::Mat C_3x1 = -P_3x3_inv * P_3x1; //eye
 
-	cv::Mat p_1x4 = cv::Mat(1, 4, CV_64FC1); 
-	p_1x4 = (cv::Mat_<double>(1, 4) << 0, 1, 0, 50);
+	cv::Mat normal = (cv::Mat_<double>(1, 3) << 0, 1, 0);
+	float d = -2.1;
 
-	cout << "y_3x1 = " << endl << " " << y_3x1 << endl << endl;
 	cout << "P_3x3_inv = " << endl << " " << P_3x3_inv << endl << endl;
-	cout << "p_1x4 = " << endl << " " << p_1x4 << endl << endl;
+	cout << "normal = " << endl << " " << normal << endl << endl;
 	cout << "C_3x1 = " << endl << " " << C_3x1 << endl << endl;
 
-	cv::Mat X_d_3x1 = P_3x3_inv * y_3x1;
-	cv::Mat tmp1 = p_1x4(cv::Rect(0, 0, 3, 1))*C_3x1;
 
-	cv::Mat tmp2 = p_1x4(cv::Rect(0, 0, 3, 1))*X_d_3x1;
-	double lambda = -(tmp1.at<double>(0, 0) + p_1x4.at<double>(0, 3)) / tmp2.at<double>(0, 0);
+	cv::Mat X_d_3x1 = P_3x3_inv * rbl_3x1;
+	cv::Mat tmp1 = normal*C_3x1;
 
-	cv::Mat res = C_3x1 + (P_3x3_inv * lambda) * y_3x1;
+	cv::Mat tmp2 = normal *X_d_3x1;
+	double lambda = -(tmp1.at<double>(0, 0) + d) / tmp2.at<double>(0, 0);
+
+	cv::Mat res = C_3x1 + lambda * X_d_3x1;
 
 	cout << "X_d_3x1 = " << endl << " " << X_d_3x1 << endl << endl;
 	cout << "tmp1 = " << endl << " " << tmp1 << endl << endl;
 	cout << "tmp2 = " << endl << " " << tmp2 << endl << endl;
 	cout << "lambda = " << endl << " " << lambda << endl << endl;
 	cout << "res = " << endl << " " << res << endl << endl;
+
+	imshow("projected points", image);
+	cv::waitKey(0);
 }
 
 void train(NN* nn, ObjectFeature feature)
 {
-	//int n =1000;
-	//double ** trainingSet = new double *[n];
-	//for (int i = 0; i < n; i++) {
-	//	trainingSet[i] = new double[nn->n[0] + nn->n[nn->l - 1]];
-
-	//	bool classA = i % 2;
-
-	//	for (int j = 0; j < nn->n[0]; j++) {
-	//		if (classA) {
-	//			trainingSet[i][j] = 0.1 * (double)rand() / (RAND_MAX)+0.6;
-	//		}
-	//		else {
-	//			trainingSet[i][j] = 0.1 * (double)rand() / (RAND_MAX)+0.2;
-	//		}
-	//	}
-
-	//	trainingSet[i][nn->n[0]] = (classA) ? 1.0 : 0.0;
-	//	trainingSet[i][nn->n[0] + 1] = (classA) ? 0.0 : 1.0;
-	//}
-
-
-	int n = feature.Objects.size();
+	int n =1000;
 	double ** trainingSet = new double *[n];
-
-	int i = 0;
-	std::list<FeatureList>::iterator obj = feature.Objects.begin();
-	while (obj != feature.Objects.end())
-	{
+	for (int i = 0; i < n; i++) {
 		trainingSet[i] = new double[nn->n[0] + nn->n[nn->l - 1]];
-		for (int j = 0; j < nn->n[0]; j++) 
-		{
-			if(j%nn->n[0] == 0)
-				trainingSet[i][j] = (*obj).Feature1;
-			if(j%nn->n[0] == 1)
-				trainingSet[i][j] = (*obj).Feature2;
-			//add more features
+
+		bool classA = i % 2;
+
+		for (int j = 0; j < nn->n[0]; j++) {
+			if (classA) {
+				trainingSet[i][j] = 0.1 * (double)rand() / (RAND_MAX)+0.6;
+			}
+			else {
+				trainingSet[i][j] = 0.1 * (double)rand() / (RAND_MAX)+0.2;
+			}
 		}
 
-		if ((*obj).ClassLabel.label == "Square")
-		{
-			trainingSet[i][nn->n[0]] = 1.0;
-			trainingSet[i][nn->n[0]+1] = 0.0;
-			trainingSet[i][nn->n[0]+2] = 0.0;			
-		}
-		else if ((*obj).ClassLabel.label == "Rectangle")
-		{
-			trainingSet[i][nn->n[0]] = 0.0;
-			trainingSet[i][nn->n[0] + 1] = 1.0;
-			trainingSet[i][nn->n[0] + 2] = 0.0;
-		}
-		else if ((*obj).ClassLabel.label == "Star")
-		{
-			trainingSet[i][nn->n[0]] = 0.0;
-			trainingSet[i][nn->n[0] + 1] = 0.0;
-			trainingSet[i][nn->n[0] + 2] = 1.0;
-		}
-		else
-		{
-			trainingSet[i][nn->n[0]] = 0.0;
-			trainingSet[i][nn->n[0] + 1] = 0.0;
-			trainingSet[i][nn->n[0] + 2] = 0.0;
-		}
-
-		i++;
-		obj++;
+		trainingSet[i][nn->n[0]] = (classA) ? 1.0 : 0.0;
+		trainingSet[i][nn->n[0] + 1] = (classA) ? 0.0 : 1.0;
 	}
 
 
+	//int n = feature.Objects.size();
+	//double ** trainingSet = new double *[n];
+
+	//int i = 0;
+	//std::list<FeatureList>::iterator obj = feature.Objects.begin();
+	//while (obj != feature.Objects.end())
+	//{
+	//	trainingSet[i] = new double[nn->n[0] + nn->n[nn->l - 1]];
+	//	for (int j = 0; j < nn->n[0]; j++) 
+	//	{
+	//		if(j%nn->n[0] == 0)
+	//			trainingSet[i][j] = (*obj).Feature1;
+	//		if(j%nn->n[0] == 1)
+	//			trainingSet[i][j] = (*obj).Feature2;
+	//		//add more features
+	//	}
+
+	//	if ((*obj).ClassLabel.label == "Square")
+	//	{
+	//		trainingSet[i][nn->n[0]] = 1.0;
+	//		trainingSet[i][nn->n[0]+1] = 0.0;
+	//		trainingSet[i][nn->n[0]+2] = 0.0;			
+	//	}
+	//	else if ((*obj).ClassLabel.label == "Rectangle")
+	//	{
+	//		trainingSet[i][nn->n[0]] = 0.0;
+	//		trainingSet[i][nn->n[0] + 1] = 1.0;
+	//		trainingSet[i][nn->n[0] + 2] = 0.0;
+	//	}
+	//	else if ((*obj).ClassLabel.label == "Star")
+	//	{
+	//		trainingSet[i][nn->n[0]] = 0.0;
+	//		trainingSet[i][nn->n[0] + 1] = 0.0;
+	//		trainingSet[i][nn->n[0] + 2] = 1.0;
+	//	}
+	//	else
+	//	{
+	//		trainingSet[i][nn->n[0]] = 0.0;
+	//		trainingSet[i][nn->n[0] + 1] = 0.0;
+	//		trainingSet[i][nn->n[0] + 2] = 0.0;
+	//	}
+
+	//	i++;
+	//	obj++;
+	//}
+
+
 	double error = 1.0;
-	i = 0;
-	while (error > 0.1)
+	int i = 0;
+	while (error > 0.01)
 	{
 		setInput(nn, trainingSet[i%n]);
 		feedforward(nn);
@@ -605,69 +670,69 @@ void train(NN* nn, ObjectFeature feature)
 
 void test(NN* nn, ObjectFeature feature, int num_samples = 10)
 {
-	//double* in = new double[nn->n[0]];
-
-	//int num_err = 0;
-	//for (int n = 0; n < num_samples; n++)
-	//{
-	//	bool classA = rand() % 2;
-
-	//	for (int j = 0; j < nn->n[0]; j++)
-	//	{
-	//		if (classA)
-	//		{
-	//			in[j] = 0.1 * (double)rand() / (RAND_MAX)+0.6;
-	//		}
-	//		else
-	//		{
-	//			in[j] = 0.1 * (double)rand() / (RAND_MAX)+0.2;
-	//		}
-	//	}
-	//	printf("predicted: %d\n", !classA);
-	//	setInput(nn, in, true);
-
-	//	feedforward(nn);
-	//	int output = getOutput(nn, true);
-	//	if (output == classA) num_err++;
-	//	printf("\n");
-	//}
-	
-	int num_err = 0;
-
 	double* in = new double[nn->n[0]];
-	int i = 0;
-	std::list<FeatureList>::iterator obj = feature.Objects.begin();
-	while (obj != feature.Objects.end())
+
+	int num_err = 0;
+	for (int n = 0; n < num_samples; n++)
 	{
- 		for (int j = 0; j < nn->n[0]; j++)
+		bool classA = rand() % 2;
+
+		for (int j = 0; j < nn->n[0]; j++)
 		{
-			if (j%nn->n[0] == 0)
-				in[j] = (*obj).Feature1;
-			if (j%nn->n[0] == 1)
-				in[j] = (*obj).Feature2; 
-			//add more features
+			if (classA)
+			{
+				in[j] = 0.1 * (double)rand() / (RAND_MAX)+0.6;
+			}
+			else
+			{
+				in[j] = 0.1 * (double)rand() / (RAND_MAX)+0.2;
+			}
 		}
-		int classA = 0;
-		if ((*obj).ClassLabel.label == "Square")
-			classA = 0;
-		else if ((*obj).ClassLabel.label == "Rectangle")
-			classA = 1;
-		else if ((*obj).ClassLabel.label == "Star")
-			classA = 2;
-		else
-			classA = 3;
-
-
-		printf("predicted: %d\n", classA);
+		printf("predicted: %d\n", !classA);
 		setInput(nn, in, true);
 
 		feedforward(nn);
 		int output = getOutput(nn, true);
 		if (output == classA) num_err++;
 		printf("\n");
-		i++;
-		obj++;
 	}
+	
+	//int num_err = 0;
+
+	//double* in = new double[nn->n[0]];
+	//int i = 0;
+	//std::list<FeatureList>::iterator obj = feature.Objects.begin();
+	//while (obj != feature.Objects.end())
+	//{
+ //		for (int j = 0; j < nn->n[0]; j++)
+	//	{
+	//		if (j%nn->n[0] == 0)
+	//			in[j] = (*obj).Feature1;
+	//		if (j%nn->n[0] == 1)
+	//			in[j] = (*obj).Feature2; 
+	//		//add more features
+	//	}
+	//	int classA = 0;
+	//	if ((*obj).ClassLabel.label == "Square")
+	//		classA = 0;
+	//	else if ((*obj).ClassLabel.label == "Rectangle")
+	//		classA = 1;
+	//	else if ((*obj).ClassLabel.label == "Star")
+	//		classA = 2;
+	//	else
+	//		classA = 3;
+
+
+	//	printf("predicted: %d\n", classA);
+	//	setInput(nn, in, true);
+
+	//	feedforward(nn);
+	//	int output = getOutput(nn, true);
+	//	if (output == classA) num_err++;
+	//	printf("\n");
+	//	i++;
+	//	obj++;
+	//}
 
 
 	double err = (double)num_err / num_samples;
@@ -676,24 +741,24 @@ void test(NN* nn, ObjectFeature feature, int num_samples = 10)
 
 int main(int argc, char** argv)
 {
-	ObjectFeature feature = ImageTresholding();
-	//Test();
+	//ObjectFeature feature = ImageTresholding();
+	////Test();
 	Test2();
 
 
 
-	/*NN * nn = createNN(2, 4, 3);
-	train(nn,feature);
+	//NN * nn = createNN(2, 4, 2);
+	//train(nn,feature);
 
-	getchar();
+	//getchar();
 
-	test(nn,feature,100);
+	//test(nn,feature,100);
 
-	getchar();
+	//getchar();
 
-	releaseNN(nn);
+	//releaseNN(nn);
 
-	return 0;*/
+	//return 0;
 
 }
 
