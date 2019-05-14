@@ -17,6 +17,8 @@ struct NN {
 NN * createNN( int n, int h, int o );
 void releaseNN( NN *& nn );
 void feedforward( NN * nn );
-double backpropagation( NN * nn, double * t );
+void backpropagation( NN * nn, double * t );
+void updateWeights(NN * nn);
+double computeError(NN * nn, double * t);
 void setInput( NN * nn, double * in, bool verbose = false  );
 int getOutput( NN * nn, bool verbose = false );

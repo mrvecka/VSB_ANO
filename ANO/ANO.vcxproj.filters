@@ -27,6 +27,12 @@
     <ClInclude Include="backprop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="3DObjectDetection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NNClassification.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -36,6 +42,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="backprop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DObjectDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NNClassification.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -112,7 +112,7 @@ void feedforward(NN * nn)
 	}
 }
 
-double backpropagation( NN * nn, double * t ) 
+void backpropagation( NN * nn, double * t ) 
 {
 	for (int k = nn->l-1; k >= 0; k--)//layers
 	{
@@ -120,9 +120,10 @@ double backpropagation( NN * nn, double * t )
 		{
 			for (int i = 0; i < nn->n[k]; i++)//neurons
 			{
-				double to = t[i];
+				double out = t[i];
 				double y = nn->y[k][i];
-				nn->d[k][i] = (to - nn->y[k][i]) * LAMBDA *   nn->y[k][i] * (1 - nn->y[k][i]);
+				float error = out - y;
+				nn->d[k][i] = error;
 			}
 		}
 		else if ( k != 0) //hidden layer
@@ -135,34 +136,45 @@ double backpropagation( NN * nn, double * t )
 					errorResult += nn->d[k + 1][j] * nn->w[k][j][i];
 				}
 
-				nn->d[k][i] = errorResult * LAMBDA *   nn->y[k][i] * (1 - nn->y[k][i]);
+				nn->d[k][i] = errorResult;
 			}
+		}
+
+		for (int i = 0; i < nn->n[k]; i++)//neurons
+		{
+			nn->d[k][i] = nn->d[k][i] * (nn->y[k][i] * (1- nn->y[k][i]));
 		}
 	}
 
-	for (int k = 0; k < nn->l-1; k++)//layers
+}
+
+void updateWeights(NN * nn)
+{
+	for (int k = 0; k < nn->l - 1; k++)//layers
 	{
-		for (int i = 0; i < nn->n[k+1]; i++)//upper layer
+		for (int i = 0; i < nn->n[k + 1]; i++)//upper layer
 		{
 			for (int j = 0; j < nn->n[k]; j++)//lower layer
 			{
 				double oldWeight = nn->w[k][i][j];
 				double d = nn->d[k + 1][i];
 				double y = nn->y[k][i];
-				double newWeight = ETA * d * y;
+				double newWeight = oldWeight + ETA * nn->d[k + 1][i] * nn->y[k][i];
 				nn->w[k][i][j] = newWeight;
 			}
 
 		}
 	}
-	
-	
+}
+
+double computeError(NN * nn, double * t)
+{
 	double error = 0.0;
 	for (int n = 0; n < nn->n[nn->l - 1]; n++)
 	{
 		error += pow(t[n] - nn->y[nn->l - 1][n], 2);
 	}
-	error = error * (1.0 / 2.0);
+	//error = error * (1.0 / 2.0);
 
 	return error;
 }
