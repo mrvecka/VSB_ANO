@@ -22,3 +22,4 @@ void updateWeights(NN * nn);
 double computeError(NN * nn, double * t);
 void setInput( NN * nn, double * in, bool verbose = false  );
 int getOutput( NN * nn, bool verbose = false );
+int getOutputMyData(NN * nn, bool verbose = false);

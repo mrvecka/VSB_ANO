@@ -95,6 +95,27 @@ void trainMyData(NN* nn, ObjectFeature feature)
 		i++;
 		obj++;
 	}
+
+	i = 0;
+	double error = 1.0;
+	while (error > 0.01)
+	{
+		int k = i % n;
+		setInput(nn, trainingSet[k]);
+		feedforward(nn);
+		backpropagation(nn, &trainingSet[i%n][nn->n[0]]);
+		updateWeights(nn);
+		error = computeError(nn, &trainingSet[i%n][nn->n[0]]);
+		i++;
+		printf("\rerr=%0.3f", error);
+
+	}
+	printf(" (%i iterations) result error: %f\n", i, error);
+
+	for (int i = 1; i < n; i++) {
+		delete[] trainingSet[i];
+	}
+	delete[] trainingSet;
 	
 }
 
@@ -155,7 +176,7 @@ void testMyData(NN* nn, ObjectFeature feature, int num_samples = 10)
 		setInput(nn, in, true);
 
 		feedforward(nn);
-		int output = getOutput(nn, true);
+		int output = getOutputMyData(nn, true);
 		if (output == classA) num_err++;
 		printf("\n");
 		i++;

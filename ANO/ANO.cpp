@@ -464,8 +464,8 @@ int main(int argc, char** argv)
 {
 	ObjectFeature feature = ImageTresholding();
 
-	train();
-	//trainFeatures(feature);
+	//train();
+	trainFeatures(feature);
 
 	////Test();
 	//Test2();
