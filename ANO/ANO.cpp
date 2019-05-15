@@ -185,34 +185,6 @@ void ComputeEthalons(ObjectFeature &feature)
 				sumF2 += (*obj).Feature2;
 			}
 		}
-
-
-		/*if (currentEthalon.x == 0.0)
-		{
-			currentEthalon = Ethalon((*obj).Feature1, (*obj).Feature2);
-			ethalons.push_back(currentEthalon);
-		}
-		else
-		{
-			MyPoint currentPoint = MyPoint((*obj).Feature1, (*obj).Feature2);
-			std::list<Ethalon>::iterator eth = ethalons.begin();
-			bool found = false;
-			while (eth != ethalons.end())
-			{
-				float dst = ComputeEuclideanDistance(currentPoint, (*eth));
-				if (dst < 0.1)
-				{
-					(*eth) = Ethalon((currentPoint.x + (*eth).x) / 2, (currentPoint.y + (*eth).y) / 2);
-					found = true;
-				}
-
-				eth++;
-			}
-			if (!found)
-			{
-				ethalons.push_back(Ethalon(currentPoint.x,currentPoint.y));
-			}
-		}*/
 		counter++;
 		obj++;
 	}
@@ -304,7 +276,7 @@ void ComputeKMeans(ObjectFeature &feature)
 		}
 
 		int tmp = 0;
-		//compute centroids
+		//compute average of centroids closest objects
 		cen = centroids.begin();
 		while (cen != centroids.end())
 		{
@@ -381,6 +353,8 @@ void PutTextInimage(ObjectFeature &feature)
 		//std::cout << centerPoint<< std::endl;
 		obj++;
 	}
+
+	std::cout << "Done ..." << std::endl;
 }
 
 void IlustrateFeatures(ObjectFeature &feature)
@@ -402,6 +376,30 @@ void IlustrateFeatures(ObjectFeature &feature)
 
 	imshow("Features ilustration", coloredImage);
 
+
+}
+
+void ShowOutput(ObjectFeature &feature)
+{
+
+	std::list<FeatureList>::iterator obj = feature.Objects.begin();
+
+	std::cout << "Object classification with ethalons" << std::endl;
+	while (obj != feature.Objects.end())
+	{
+		printf("Object index: %i, object class: %d\n", (*obj).Index, (*obj).ClassLabel.label);
+		obj++;
+	}
+
+	std::list<CentroidObject>::iterator cen = feature.Centroids.begin();
+	int i = 0;
+	std::cout << "K-means centroids" << std::endl;
+	while (cen != feature.Centroids.end())
+	{
+		printf("Centroid %i, position (%f,%f)\n", i, (*cen).Centroid.x, (*cen).Centroid.y);
+		i++;
+		cen++;
+	}
 
 }
 
@@ -445,11 +443,12 @@ ObjectFeature ImageTresholding()
 	AssignClassToObject(feature);
 	ComputeKMeans(feature);
 
-	IlustrateFeatures(feature);
+	ShowOutput(feature);
+	//IlustrateFeatures(feature);
 	PutTextInimage(feature);
 
-	imshow("Initial", imageGray);
-	imshow("tresshold", feature.IndexedImage);
+	//imshow("Initial", imageGray);
+	//imshow("tresshold", feature.IndexedImage);
 	imshow("color", feature.ColoredImage);
 
 	cv::waitKey(0);
@@ -465,7 +464,7 @@ int main(int argc, char** argv)
 	ObjectFeature feature = ImageTresholding();
 
 	//train();
-	trainFeatures(feature);
+	//trainFeatures(feature);
 
 	////Test();
 	//Test2();

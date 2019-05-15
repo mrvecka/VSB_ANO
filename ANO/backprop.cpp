@@ -90,8 +90,8 @@ void feedforward(NN * nn)
 			{
 				weight += nn->w[k - 1][i][j] *  nn->y[k-1][j];
 			}
-			double tmp = 1.0f / (1.0f + exp(-LAMBDA * weight));
-			nn->y[k][i] = tmp;
+			double res = 1.0f / (1.0f + exp(-LAMBDA * weight));
+			nn->y[k][i] = res;
 		}
 		
 	}
@@ -99,14 +99,13 @@ void feedforward(NN * nn)
 
 void backpropagation( NN * nn, double * t ) 
 {
-	double delta = 0.0f;
 	for (int k = nn->l-1; k >= 0; k--)//layers
 	{
 		if (k == nn->l-1)//output layer
 		{
 			for (int i = 0; i < nn->n[k]; i++)//neurons
 			{
-				delta = nn->y[k][i] * (1 - nn->y[k][i]);
+				double delta = nn->y[k][i] * (1 - nn->y[k][i]);
 				float error = t[i] - nn->y[k][i];
 
 				nn->d[k][i] = error * LAMBDA * delta;

@@ -34,7 +34,7 @@ public:
 
 class FeatureList {
 public:
-	double Index;
+	int Index;
 	double Area;
 	Vec3b Color;
 	Point Center;
@@ -56,13 +56,7 @@ class CentroidObject {
 public:
 	MyPoint Centroid;
 	std::list<FeatureList> ClosestObjects;
-	//CentroidObject(MyPoint point)
-	//{
-	//	this->Centroid = point;
-	//}
-	//CentroidObject() {
-	//	this->Centroid = MyPoint(0.0, 0.0);
-	//}
+
 	CentroidObject() {}
 };
 
